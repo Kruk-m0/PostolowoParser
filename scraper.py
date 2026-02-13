@@ -2,7 +2,7 @@ from bs4 import BeautifulSoup
 import requests
 import pandas as pd
 
-url = "https://eagle.polski.golf/api//_tournament/livescore/get_livescore?id=12747&format=sp_brutto&classification=0"
+url = "https://eagle.polski.golf/api//_tournament/livescore/get_livescore?id=12747&format=stb_netto&classification=0"
 response = requests.get(url)
 data = response.json()
 
