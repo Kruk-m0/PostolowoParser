@@ -1,49 +1,61 @@
 import requests
 import pandas as pd
+import numpy as np
 import datetime
 import gspread
-import pathlib
-
-
-gs = gspread.service_account(filename=".config/service_account.json")
-spreadsheet = gs.open_by_url("https://docs.google.com/spreadsheets/d/1dm7lArskjodITBJmJ0_2CO4AdDz1NEfM1Lm-YPUscHo/edit?gid=1927988452#gid=1927988452")
-
+import re
+import json
 
 first_wednesday = datetime.date(2026, 5, 6)
 #  6 maja do 30 września 2026 roku.
 
 
-#tournament_id = int(input("Enter tournament id: "))
 
-#TODO: remove
-tournament_id = 13937
-url = f"https://eagle.polski.golf/api//_tournament/livescore/get_livescore?id={tournament_id}&format=stb_netto&classification=82967"
-response = requests.get(url)
-data = response.json()
-wednesday = first_wednesday + datetime.timedelta(weeks=int(pd.json_normalize(data['tournament_status'])['name'].str.split().iloc[-1][-1]) -1)
-print(wednesday)
+url = "https://polski.golf/turnieje/lista-turniejow/?status=2"
 
-df = pd.json_normalize(data["items"])
-df['date'] = first_wednesday
-df = df[['date',"last_name", "first_name", "hcp" ,"sum"]]
-df['sum'] = df['sum'].astype(int)
-df['hcp'] = df['hcp'].astype(float)
+html = requests.get(url).text
 
+match = re.search(r'var data = (\{.*?\});', html, re.DOTALL)
 
-df.loc[len(df)] = [wednesday, "Ziutkowski",'Ziutek', 4, 30]
-df.loc[len(df)] = [wednesday, "Ziutkowski",'Zautek', 3, 30]
+data = json.loads(match.group(1))
 
+items = data["items"]
 
-sheisse = pd.DataFrame(  spreadsheet.worksheet("0-18").get_all_records(), index=)
-print("spread sheisse")
-print(sheisse)
-sheisse.rename(index=)
-sheisse.to_csv('sheisse.csv')
+today = datetime.date.today()
 
-sheisse = pd.read_csv('sheisse.csv', index_col='')
-print("Original sheisse:")
+# current league round
+round_number = ((today - first_wednesday).days // 7) + 1
 
-print(sheisse)
+print("Expected round:", round_number)
+
+target = None
+
+for t in items:
+
+    if (
+        "Postołowo Golf Club" in t["courses_txt"]
+        and "Środowa Liga Golfa" in t["name"]
+    ):
+
+        m = re.search(r'(\d+)\s*$', t["name"])
+
+        if not m:
+            continue
+
+        tournament_round = int(m.group(1))
+
+        if tournament_round == round_number:
+            target = t
+            break
+
+if target is None:
+    raise Exception("Tournament not found")
+
+tournament_id = target["id"]
+
+print("Tournament:", target["name"])
+print("ID:", tournament_id)
+
 '''
 def update_sheet(df1, df2):
     df2 = df2.copy()
@@ -87,20 +99,52 @@ def update_sheet(df1, df2):
 
     return df2
 
-update_sheet(df, sheisse)
 
-print("\nUpdated sheisse:")
-print(sheisse)
-#sheisse.to_csv('sheisse.csv', index=False)
+def top10_sum(row, date_cols):
+    values = pd.to_numeric(row[date_cols], errors="coerce").fillna(0).values
+    return np.sum(np.sort(values)[-10:])
 
 
-hcp0_18 = df[df['hcp'] <= 18].sort_values(by=['last_name', 'first_name']).reset_index(drop=True)
-hcp18_1__36 = df[df['hcp'] > 18].sort_values(by=['last_name', 'first_name']).reset_index(drop=True)
-print(hcp0_18)
-print(hcp18_1__36)
+
+
+gs = gspread.service_account(filename=".config/service_account.json")
+spreadsheet = gs.open_by_url("https://docs.google.com/spreadsheets/d/1dm7lArskjodITBJmJ0_2CO4AdDz1NEfM1Lm-YPUscHo/edit?gid=1927988452#gid=1927988452")
+
+
+
+url = f"https://eagle.polski.golf/api//_tournament/livescore/get_livescore?id={tournament_id}&format=stb_netto&classification=82967"
+response = requests.get(url)
+data = response.json()
+wednesday = first_wednesday + datetime.timedelta(weeks=int(pd.json_normalize(data['tournament_status'])['name'].str.split().iloc[-1][-1]) -1)
+print(wednesday)
+
+df = pd.json_normalize(data["items"])
+df['date'] = wednesday
+df = df[['date',"last_name", "first_name", "hcp" ,"sum"]]
+df['sum'] = df['sum'].astype(int)
+df['hcp'] = df['hcp'].astype(float)
+
+df.loc[len(df)] = ["2026-05-06", "Test", "Player", 15.0, 25]
+df.loc[len(df)] = ["2026-05-06", "Test", "Player2", 3.0, 35]
+
+sheisse = pd.read_csv('sheisse.csv', index_col='id')
+
+
+sheisse = update_sheet(df, sheisse)
+sheisse.index.name = "id"
+date_cols = [c for c in sheisse.columns if c not in ["Nazwisko", "Imię", "HCP", "Suma"]]
+sheisse["Suma"] = sheisse.apply(lambda r: top10_sum(r, date_cols), axis=1)
+
+sheisse.to_csv('sheisse.csv')
+
+
+hcp0_18 = sheisse[sheisse['HCP'] <= 18].sort_values(by=['Nazwisko', 'Imię']).reset_index(drop=True)
+hcp18_1__36 = sheisse[sheisse['HCP'] > 18].sort_values(by=['Nazwisko', 'Imię']).reset_index(drop=True)
+
+
+wsheet018 = spreadsheet.worksheet("0-18")
+wsheet018.update([hcp0_18.columns.values.tolist()] + hcp0_18.values.tolist())
+
+wsheet1836 = spreadsheet.worksheet("18.1-36")
+wsheet1836.update([hcp18_1__36.columns.values.tolist()] + hcp18_1__36.values.tolist())
 '''
-
-
-
-#wsheet018 = spreadsheet.worksheet("hcp0_18")
-#wsheet018.update([hcp0_18.columns.values.tolist()] +
