@@ -56,7 +56,7 @@ tournament_id = target["id"]
 print("Tournament:", target["name"])
 print("ID:", tournament_id)
 
-'''
+
 def update_sheet(df1, df2):
     df2 = df2.copy()
 
@@ -121,11 +121,9 @@ print(wednesday)
 df = pd.json_normalize(data["items"])
 df['date'] = wednesday
 df = df[['date',"last_name", "first_name", "hcp" ,"sum"]]
+df.fillna(value={'sum': 0}, inplace=True)
 df['sum'] = df['sum'].astype(int)
 df['hcp'] = df['hcp'].astype(float)
-
-df.loc[len(df)] = ["2026-05-06", "Test", "Player", 15.0, 25]
-df.loc[len(df)] = ["2026-05-06", "Test", "Player2", 3.0, 35]
 
 sheisse = pd.read_csv('sheisse.csv', index_col='id')
 
@@ -145,6 +143,7 @@ hcp18_1__36 = sheisse[sheisse['HCP'] > 18].sort_values(by=['Nazwisko', 'Imię'])
 wsheet018 = spreadsheet.worksheet("0-18")
 wsheet018.update([hcp0_18.columns.values.tolist()] + hcp0_18.values.tolist())
 
+
 wsheet1836 = spreadsheet.worksheet("18.1-36")
 wsheet1836.update([hcp18_1__36.columns.values.tolist()] + hcp18_1__36.values.tolist())
-'''
+
