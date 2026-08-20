@@ -31,10 +31,10 @@ print("Expected round:", round_number)
 target = None
 
 for t in items:
-
     if (
         "Postołowo Golf Club" in t["courses_txt"]
-        and "Środowa Liga Golfa" in t["name"]
+        and "Środowa Liga Golfa" in t["name"] 
+        #and "14282" in t['id'] leave this comment here, its for quick manual adding of the tournament if the name was incorrectly provided
     ):
 
         m = re.search(r'(\d+)\s*$', t["name"])
@@ -124,6 +124,9 @@ df = df[['date',"last_name", "first_name", "hcp" ,"sum"]]
 df.fillna(value={'sum': 0}, inplace=True)
 df['sum'] = df['sum'].astype(int)
 df['hcp'] = df['hcp'].astype(float)
+df['last_name'] = df['last_name'].str.strip()
+df['first_name'] = df['first_name'].str.strip()
+
 
 sheisse = pd.read_csv('sheisse.csv', index_col='id')
 
