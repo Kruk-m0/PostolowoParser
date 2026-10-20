@@ -147,9 +147,9 @@ hcp18_1__36 = sheisse[sheisse['HCP'] > 18].sort_values(by=['Nazwisko', 'Imię'])
 
 
 wsheet018 = spreadsheet.worksheet("0-18")
-#wsheet018.update([hcp0_18.columns.values.tolist()] + hcp0_18.values.tolist())
+wsheet018.update([hcp0_18.columns.values.tolist()] + hcp0_18.values.tolist())
 
 
 wsheet1836 = spreadsheet.worksheet("18.1-36")
-#wsheet1836.update([hcp18_1__36.columns.values.tolist()] + hcp18_1__36.values.tolist())
+wsheet1836.update([hcp18_1__36.columns.values.tolist()] + hcp18_1__36.values.tolist())
 
