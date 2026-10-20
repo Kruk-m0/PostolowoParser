@@ -5,6 +5,7 @@ import datetime
 import gspread
 import re
 import json
+import dotenv
 
 first_wednesday = datetime.date(2026, 5, 6)
 #  6 maja do 30 września 2026 roku.
@@ -34,7 +35,7 @@ for t in items:
     if (
         "Postołowo Golf Club" in t["courses_txt"]
         and "Środowa Liga Golfa" in t["name"] 
-        #and "14282" in t['id'] leave this comment here, its for quick manual adding of the tournament if the name was incorrectly provided
+        # and "14434" in t['id'] #leave this comment here, its for quick manual adding of the tournament if the name was incorrectly provided
     ):
 
         m = re.search(r'(\d+)\s*$', t["name"])
@@ -106,16 +107,18 @@ def top10_sum(row, date_cols):
 
 
 
+dotenv.load_dotenv()
+docsurl = dotenv.dotenv_values(".config/.env")["docsurl"]
 
 gs = gspread.service_account(filename=".config/service_account.json")
-spreadsheet = gs.open_by_url("https://docs.google.com/spreadsheets/d/1dm7lArskjodITBJmJ0_2CO4AdDz1NEfM1Lm-YPUscHo/edit?gid=1927988452#gid=1927988452")
+spreadsheet = gs.open_by_url(docsurl)
 
 
 
 url = f"https://eagle.polski.golf/api//_tournament/livescore/get_livescore?id={tournament_id}&format=stb_netto&classification=82967"
 response = requests.get(url)
 data = response.json()
-wednesday = first_wednesday + datetime.timedelta(weeks=int(pd.json_normalize(data['tournament_status'])['name'].str.split().iloc[-1][-1]) -1)
+wednesday = first_wednesday + datetime.timedelta(weeks=round_number -1)
 print(wednesday)
 
 df = pd.json_normalize(data["items"])
@@ -144,9 +147,9 @@ hcp18_1__36 = sheisse[sheisse['HCP'] > 18].sort_values(by=['Nazwisko', 'Imię'])
 
 
 wsheet018 = spreadsheet.worksheet("0-18")
-wsheet018.update([hcp0_18.columns.values.tolist()] + hcp0_18.values.tolist())
+#wsheet018.update([hcp0_18.columns.values.tolist()] + hcp0_18.values.tolist())
 
 
 wsheet1836 = spreadsheet.worksheet("18.1-36")
-wsheet1836.update([hcp18_1__36.columns.values.tolist()] + hcp18_1__36.values.tolist())
+#wsheet1836.update([hcp18_1__36.columns.values.tolist()] + hcp18_1__36.values.tolist())
 

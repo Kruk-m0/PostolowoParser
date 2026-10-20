@@ -1,6 +1,4 @@
 # Created by venv; see https://docs.python.org/3/library/venv.html
 .venv/
-league.html
-league_files/
-data.json
 .config/
+sheisse.csv
